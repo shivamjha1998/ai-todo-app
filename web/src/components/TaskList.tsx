@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchTasks, createTask, deleteTask } from '../services/api';
+import { fetchTasks, createTask, deleteTask, updateTask } from '../services/api';
 import type { Task, CreateTaskDto } from '../types';
 import { Link } from 'react-router-dom';
 
@@ -51,6 +51,16 @@ export default function TaskList() {
         }
     };
 
+    const handleToggleStatus = async (task: Task) => {
+        try {
+            const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
+            const updatedTask = await updateTask(task.id, { status: newStatus });
+            setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
+        } catch (error) {
+            console.error('Failed to update task status', error);
+        }
+    };
+
     return (
         <div className="container">
             <div className="row mb-4">
@@ -76,7 +86,12 @@ export default function TaskList() {
                     <div key={task.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
                         <div className="d-flex flex-column">
                             <div className="d-flex align-items-center gap-2">
-                                <input type="checkbox" className="form-check-input mt-0" checked={task.status === 'COMPLETED'} readOnly />
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input mt-0"
+                                    checked={task.status === 'COMPLETED'}
+                                    onChange={() => handleToggleStatus(task)}
+                                />
                                 <h5 className="mb-0 text-decoration-none">
                                     <Link to={`/tasks/${task.id}`} className="text-dark text-decoration-none">
                                         {task.title}
