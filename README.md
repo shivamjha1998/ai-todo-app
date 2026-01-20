@@ -17,4 +17,25 @@ An intelligent task management application that leverages Claude API to automati
 
 ## Getting Started
 
-(Instructions to be added)
+### 1. Database
+Start the PostgreSQL database using Docker:
+```bash
+docker compose up -d
+```
+
+### 2. Backend
+Navigate to the server directory, install dependencies, and start the server:
+```bash
+cd server
+npm install
+npx prisma generate
+npm run dev
+```
+
+### 3. Frontend
+Navigate to the web directory, install dependencies, and start the application:
+```bash
+cd web
+npm install
+npm run dev
+```
