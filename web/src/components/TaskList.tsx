@@ -12,6 +12,18 @@ export default function TaskList() {
         loadTasks();
     }, []);
 
+    useEffect(() => {
+        const hasProcessingTasks = tasks.some(t => t.aiStatus === 'PROCESSING');
+
+        if (hasProcessingTasks) {
+            const intervalId = setInterval(() => {
+                loadTasks();
+            }, 3000);
+
+            return () => clearInterval(intervalId);
+        }
+    }, [tasks]);
+
     const loadTasks = async () => {
         try {
             const data = await fetchTasks();

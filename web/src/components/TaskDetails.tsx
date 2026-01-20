@@ -15,6 +15,16 @@ export default function TaskDetails() {
         if (id) loadTask(id);
     }, [id]);
 
+    useEffect(() => {
+        if (task?.aiStatus === 'PROCESSING') {
+            const intervalId = setInterval(() => {
+                if (id) loadTask(id);
+            }, 3000);
+
+            return () => clearInterval(intervalId);
+        }
+    }, [task, id]);
+
     const loadTask = async (taskId: string) => {
         try {
             const data = await getTask(taskId);
