@@ -27,7 +27,7 @@ export const taskWorker = new Worker('ai-analysis-queue', async (job) => {
     }
 }, {
     connection,
-    concurrency: 2,
+    concurrency: 10,
     stalledInterval: 10000
 });
 
