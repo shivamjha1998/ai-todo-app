@@ -30,3 +30,13 @@ export const updateTask = async (id: string, updates: Partial<Task>): Promise<Ta
 export const deleteTask = async (id: string): Promise<void> => {
     await api.delete(`/tasks/${id}`);
 };
+
+export const postQuery = async (taskId: string, question: string) => {
+    const response = await api.post(`/tasks/${taskId}/query`, {
+        question,
+    });
+    if (!response.data) {
+        throw new Error('Failed to send query');
+    }
+    return response.data;
+}

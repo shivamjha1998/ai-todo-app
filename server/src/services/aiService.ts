@@ -1,5 +1,6 @@
 import { InferenceClient } from '@huggingface/inference';
 import prisma from '../prisma';
+import { ThreadType, Role } from '@prisma/client';
 
 const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
@@ -56,5 +57,65 @@ export const analyzeTask = async (taskId: string, taskTitle: string, taskDescrip
             data: { aiStatus: 'ERROR' }
         });
         // We don't throw here to ensure the task creation doesn't fail just because AI failed
+    }
+};
+
+export const processUserQuery = async (taskId: string, question: string) => {
+    try {
+        // 1. Fetch task details for context
+        const task = await prisma.task.findUnique({
+            where: { id: taskId },
+            include: { threads: true } // Optional: Include past history for better context
+        });
+
+        if (!task) throw new Error('Task not found');
+
+        // 2. Save User's Question to Database
+        await prisma.aiThread.create({
+            data: {
+                taskId,
+                type: 'USER_QUESTION', // Matches enum in schema
+                role: 'USER',
+                content: question
+            }
+        });
+
+        // 3. Construct Context-Aware Prompt
+        const systemPrompt = `
+      You are a helpful AI assistant for a Todo App.
+      Context Task: "${task.title}"
+      Description: "${task.description || 'N/A'}"
+
+      Answer the user's question specifically related to this task.
+      Keep it concise and actionable.
+    `;
+
+        // 4. Call Hugging Face API
+        const response = await hf.chatCompletion({
+            model: "meta-llama/Llama-3.2-3B-Instruct",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: question }
+            ],
+            max_tokens: 500
+        });
+
+        const aiResponse = response.choices[0].message.content || 'I could not generate a response.';
+
+        // 5. Save AI's Answer to Database
+        const savedThread = await prisma.aiThread.create({
+            data: {
+                taskId,
+                type: 'AI_ANSWER', // Matches enum in schema
+                role: 'ASSISTANT',
+                content: aiResponse
+            }
+        });
+
+        return savedThread;
+
+    } catch (error) {
+        console.error('AI Query Failed:', error);
+        throw error;
     }
 };

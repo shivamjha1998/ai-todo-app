@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
-import { analyzeTask } from '../services/aiService';
+import { analyzeTask, processUserQuery } from '../services/aiService';
 import { getOrCreateDefaultUser } from '../services/userService';
 
 export const getTasks = async (req: Request, res: Response) => {
@@ -96,5 +96,23 @@ export const deleteTask = async (req: Request, res: Response) => {
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete task' });
+    }
+};
+
+export const submitQuery = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { question } = req.body;
+
+        if (!question) {
+            return res.status(400).json({ error: 'Question is required' });
+        }
+
+        const newThread = await processUserQuery(id, question);
+
+        res.status(201).json(newThread);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to process query' });
     }
 };
