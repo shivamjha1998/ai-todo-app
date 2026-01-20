@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import taskRoutes from './routes/taskRoutes';
+import './queue/taskQueue';
 
 dotenv.config();
 

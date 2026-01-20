@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { analyzeTask, processUserQuery } from '../services/aiService';
 import { getOrCreateDefaultUser } from '../services/userService';
+import { taskQueue } from '../queue/taskQueue';
 
 export const getTasks = async (req: Request, res: Response) => {
     try {
@@ -34,16 +35,17 @@ export const createTask = async (req: Request, res: Response) => {
                 priority,
                 dueDate: dueDate ? new Date(dueDate) : null,
                 status: 'PENDING',
+                aiStatus: 'PROCESSING',
                 userId: finalUserId
             }
         });
 
-        // Trigger AI Analysis Job (Background)
-        // In a real production app, this should be handled by a queue (Bull)
-        // For MVP, we can just call it asynchronously without awaiting
-        analyzeTask(task.id, task.title, task.description).catch(err => {
-            console.error('AI Analysis Trigger Failed:', err);
+        await taskQueue.add('analyse-task', {
+            taskId: task.id,
+            title: task.title,
+            description: task.description
         });
+        console.log(`Task ${task.id} queued for analysis`);
 
         res.status(201).json(task);
     } catch (error) {
