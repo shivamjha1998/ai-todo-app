@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import taskRoutes from './routes/taskRoutes';
-import './queue/taskQueue';
 
 dotenv.config();
+
+import taskRoutes from './routes/taskRoutes';
+import './queue/taskQueue';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -16,6 +18,7 @@ app.get('/', (req, res) => {
     res.send('AI-Powered Todo App Backend is running');
 });
 
+app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 
 app.listen(port, () => {

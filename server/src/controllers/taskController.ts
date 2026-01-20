@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
-import { analyzeTask, processUserQuery } from '../services/aiService';
-import { getOrCreateDefaultUser } from '../services/userService';
+import { processUserQuery } from '../services/aiService';
 import { taskQueue } from '../queue/taskQueue';
+import { AuthRequest } from '../middleware/auth';
 
-export const getTasks = async (req: Request, res: Response) => {
+export const getTasks = async (req: AuthRequest, res: Response) => {
     try {
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
         const tasks = await prisma.task.findMany({
+            where: { userId },
             orderBy: { createdAt: 'desc' },
             include: { threads: true }
         });
@@ -16,16 +21,12 @@ export const getTasks = async (req: Request, res: Response) => {
     }
 };
 
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, description, priority, dueDate, userId } = req.body;
+        const { title, description, priority, dueDate } = req.body;
+        const userId = req.user?.id;
 
-        // For MVP: Use default user if not provided
-        let finalUserId = userId;
-        if (!finalUserId) {
-            const user = await getOrCreateDefaultUser();
-            finalUserId = user.id;
-        }
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
         // Create task
         const task = await prisma.task.create({
@@ -36,7 +37,7 @@ export const createTask = async (req: Request, res: Response) => {
                 dueDate: dueDate ? new Date(dueDate) : null,
                 status: 'PENDING',
                 aiStatus: 'PROCESSING',
-                userId: finalUserId
+                userId
             }
         });
 
@@ -54,11 +55,18 @@ export const createTask = async (req: Request, res: Response) => {
     }
 };
 
-export const getTask = async (req: Request, res: Response) => {
+export const getTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const task = await prisma.task.findUnique({
-            where: { id: String(id) },
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const task = await prisma.task.findFirst({
+            where: {
+                id: String(id),
+                userId
+            },
             include: { threads: true }
         });
         if (!task) {
@@ -70,10 +78,21 @@ export const getTask = async (req: Request, res: Response) => {
     }
 };
 
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.id;
         const { title, description, status, priority, dueDate } = req.body;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const existingTask = await prisma.task.findFirst({
+            where: { id: String(id), userId }
+        });
+
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
 
         const task = await prisma.task.update({
             where: { id: String(id) },
@@ -91,9 +110,22 @@ export const updateTask = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Check ownership
+        const existingTask = await prisma.task.findFirst({
+            where: { id: String(id), userId }
+        });
+
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
         await prisma.task.delete({ where: { id: String(id) } });
         res.status(204).send();
     } catch (error) {
@@ -101,13 +133,25 @@ export const deleteTask = async (req: Request, res: Response) => {
     }
 };
 
-export const submitQuery = async (req: Request, res: Response) => {
+export const submitQuery = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
         const { question } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
         if (!question) {
             return res.status(400).json({ error: 'Question is required' });
+        }
+
+        // Check ownership
+        const existingTask = await prisma.task.findFirst({
+            where: { id: String(id), userId }
+        });
+
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
         }
 
         const newThread = await processUserQuery(id, question);

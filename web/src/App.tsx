@@ -1,16 +1,47 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import TaskList from './components/TaskList';
 import TaskDetails from './components/TaskDetails';
+import Auth from './components/Auth';
 import './main.scss';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if token exists on initial load
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+    setLoading(false);
+  }, []);
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+  };
+
+  if (loading) return null;
+
+  if (!isAuthenticated) {
+    return <Auth onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <BrowserRouter>
       <div className="container py-4">
-        <header className="pb-3 mb-4 border-bottom">
+        <header className="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
           <Link to="/" className="d-flex align-items-center text-dark text-decoration-none">
             <span className="fs-4">AI Todo App</span>
           </Link>
+          <button onClick={handleLogout} className="btn btn-outline-secondary btn-sm">Logout</button>
         </header>
 
         <Routes>
@@ -26,6 +57,7 @@ function App() {
             </>
           } />
           <Route path="/tasks/:id" element={<TaskDetails />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
         <footer className="pt-3 mt-4 text-muted border-top">

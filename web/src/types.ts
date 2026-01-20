@@ -24,3 +24,32 @@ export interface CreateTaskDto {
     priority: 'LOW' | 'MEDIUM' | 'HIGH';
     dueDate?: string;
 }
+
+export interface User {
+    id: string;
+    email: string;
+    name: string | null;
+}
+
+export interface AuthResponse {
+    token: string;
+    user: User;
+}
+
+export interface LoginDto {
+    email: string;
+    password: string;
+}
+
+export interface RegisterDto {
+    email: string;
+    password: string;
+    name: string;
+}
+
+export interface UpdateTaskDto {
+    title?: string;
+    description?: string;
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+    dueDate?: string;
+}
