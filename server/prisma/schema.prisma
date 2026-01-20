@@ -37,7 +37,7 @@ model Task {
 model AiThread {
   id        String   @id @default(uuid())
   taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   type      ThreadType
   role      Role
   content   String
