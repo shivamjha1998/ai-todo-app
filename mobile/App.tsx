@@ -1,34 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
 import LoginScreen from './src/screens/LoginScreen';
 import TaskListScreen from './src/screens/TaskListScreen';
 import TaskDetailsScreen from './src/screens/TaskDetailsScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createStackNavigator();
 
-export default function App() {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      setIsAuthenticated(!!token);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+function AppContent() {
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
@@ -42,9 +26,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
-          <Stack.Screen name="Login">
-            {props => <LoginScreen {...props} onLogin={() => setIsAuthenticated(true)} />}
-          </Stack.Screen>
+          <Stack.Screen name="Login" component={LoginScreen} />
         ) : (
           <>
             <Stack.Screen name="TaskList" component={TaskListScreen} />
@@ -54,6 +36,14 @@ export default function App() {
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

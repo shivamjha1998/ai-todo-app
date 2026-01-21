@@ -1,12 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput, Platform, SafeAreaView } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { fetchTasks, createTask, deleteTask, updateTask } from '../services/api';
 import type { Task, CreateTaskDto } from '../types';
 
 export default function TaskListScreen() {
     const navigation = useNavigation<any>();
+    const { logout } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -136,9 +139,14 @@ export default function TaskListScreen() {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>My Tasks</Text>
-                <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-                    <Text style={styles.addButtonText}>+</Text>
-                </TouchableOpacity>
+                <View style={styles.headerButtons}>
+                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+                        <MaterialIcons name="logout" size={24} color="#666" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {loading ? (
@@ -453,5 +461,13 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 16,
-    }
+    },
+    headerButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    logoutButton: {
+        padding: 8,
+    },
 });

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { login, register } from '../services/api';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { login as loginApi, register } from '../services/api';
+import { useNavigation } from '@react-navigation/native';
 
-interface LoginScreenProps {
-    onLogin: () => void;
-}
+import { useAuth } from '../context/AuthContext';
 
-export default function LoginScreen({ onLogin }: LoginScreenProps) {
+export default function LoginScreen() {
+    const navigation = useNavigation<any>();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -32,16 +32,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 const response = await register({ email, password, name });
                 token = response.token;
             } else {
-                const response = await login({ email, password });
+                const response = await loginApi({ email, password });
                 token = response.token;
             }
 
             if (token) {
-                await AsyncStorage.setItem('token', token);
-                onLogin();
+                await login(token);
             }
         } catch (error: any) {
-            Alert.alert('Error', error.message || 'Authentication failed');
+            Alert.alert('Error', error.response?.data?.message || error.message || 'Authentication failed');
         } finally {
             setLoading(false);
         }
