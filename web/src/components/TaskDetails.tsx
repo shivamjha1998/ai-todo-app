@@ -73,7 +73,7 @@ export default function TaskDetails() {
                 </div>
                 <div className="card-body bg-light">
                     <div className="d-flex flex-column gap-3 mb-4">
-                        {task.threads?.map(thread => (
+                        {task.threads?.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map(thread => (
                             <div key={thread.id} className={`card ${thread.role === 'ASSISTANT' ? 'border-primary' : ''}`}>
                                 <div className="card-body">
                                     <h6 className="card-subtitle mb-2 text-muted text-uppercase small">
