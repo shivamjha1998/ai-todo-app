@@ -28,16 +28,19 @@ export default function LoginScreen() {
         setLoading(true);
         try {
             let token;
+            let user;
             if (isRegistering) {
                 const response = await register({ email, password, name });
                 token = response.token;
+                user = response.user;
             } else {
                 const response = await loginApi({ email, password });
                 token = response.token;
+                user = response.user;
             }
 
-            if (token) {
-                await login(token);
+            if (token && user) {
+                await login(token, user);
             }
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.message || error.message || 'Authentication failed');
@@ -105,7 +108,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#eee8e6',
     },
     content: {
         flex: 1,
@@ -133,21 +136,25 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
         padding: 16,
         borderRadius: 12,
-        marginBottom: 16,
+        borderColor: '#000',
+        borderWidth: 2,
+        margin: 8,
         fontSize: 16,
     },
     button: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#fae29d',
         padding: 16,
         borderRadius: 12,
+        borderColor: '#000',
+        borderWidth: 2,
         alignItems: 'center',
-        marginTop: 8,
+        margin: 8,
     },
     buttonDisabled: {
         opacity: 0.7,
     },
     buttonText: {
-        color: '#fff',
+        color: '#000',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -156,7 +163,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     switchText: {
-        color: '#007AFF',
+        color: '#000',
         fontSize: 14,
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
 });

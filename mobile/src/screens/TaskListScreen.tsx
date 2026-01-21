@@ -9,7 +9,7 @@ import type { Task, CreateTaskDto } from '../types';
 
 export default function TaskListScreen() {
     const navigation = useNavigation<any>();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
@@ -138,7 +138,7 @@ export default function TaskListScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.title}>My Tasks</Text>
+                <Text style={styles.title}>Hi {user?.name || 'there'}!</Text>
                 <View style={styles.headerButtons}>
                     <TouchableOpacity onPress={logout} style={styles.logoutButton}>
                         <MaterialIcons name="logout" size={24} color="#666" />
@@ -240,7 +240,7 @@ const Button = ({ title, onPress, color = '#007AFF' }: any) => (
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#eee8e6',
     },
     header: {
         flexDirection: 'row',
