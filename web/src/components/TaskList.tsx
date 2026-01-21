@@ -5,8 +5,12 @@ import { Link } from 'react-router-dom';
 
 export default function TaskList() {
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [newTaskTitle, setNewTaskTitle] = useState('');
     const [loading, setLoading] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
+    const [dueDate, setDueDate] = useState('');
+    const [showDetails, setShowDetails] = useState(false)
 
     useEffect(() => {
         loadTasks();
@@ -35,17 +39,25 @@ export default function TaskList() {
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTaskTitle.trim()) return;
+        if (!title.trim()) return;
 
         setLoading(true);
         try {
             const newTask: CreateTaskDto = {
-                title: newTaskTitle,
-                priority: 'MEDIUM', // default
+                title,
+                description: description || undefined,
+                priority,
+                dueDate: dueDate ? new Date(dueDate).toISOString() : undefined
             };
             await createTask(newTask);
-            setNewTaskTitle('');
-            await loadTasks(); // reload to get AI status if immediate
+
+            setTitle('');
+            setDescription('');
+            setPriority('MEDIUM');
+            setDueDate('');
+            setShowDetails(false);
+
+            await loadTasks();
         } catch (error) {
             console.error('Failed to create task', error);
         } finally {
@@ -77,51 +89,120 @@ export default function TaskList() {
         <div className="container">
             <div className="row mb-4">
                 <div className="col">
-                    <form onSubmit={handleCreateTask} className="d-flex gap-2">
-                        <input
-                            type="text"
-                            className="form-control form-control-lg"
-                            placeholder="What do you need to do? (AI will analyze it)"
-                            value={newTaskTitle}
-                            onChange={(e) => setNewTaskTitle(e.target.value)}
-                            disabled={loading}
-                        />
-                        <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                            {loading ? 'Adding...' : 'Add Task'}
-                        </button>
-                    </form>
+                    <div className="card shadow-sm">
+                        <div className="card-body">
+                            <form onSubmit={handleCreateTask}>
+                                {/* Main Input */}
+                                <div className="input-group mb-3">
+                                    <input
+                                        type="text"
+                                        className="form-control form-control-lg"
+                                        placeholder="What do you need to do?"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        disabled={loading}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className={`btn ${showDetails ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                        onClick={() => setShowDetails(!showDetails)}
+                                    >
+                                        {showDetails ? 'Hide Details' : 'Add Details'}
+                                    </button>
+                                    <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+                                        {loading ? 'Adding...' : 'Add Task'}
+                                    </button>
+                                </div>
+
+                                {/* Collapsible Details */}
+                                {showDetails && (
+                                    <div className="row g-3 animate__animated animate__fadeIn">
+                                        <div className="col-md-12">
+                                            <label className="form-label">Description (for AI Context)</label>
+                                            <textarea
+                                                className="form-control"
+                                                rows={2}
+                                                placeholder="Add more details to help the AI..."
+                                                value={description}
+                                                onChange={(e) => setDescription(e.target.value)}
+                                            ></textarea>
+                                        </div>
+
+                                        <div className="col-md-6">
+                                            <label className="form-label">Priority</label>
+                                            <select
+                                                className="form-select"
+                                                value={priority}
+                                                onChange={(e) => setPriority(e.target.value as any)}
+                                            >
+                                                <option value="LOW">Low</option>
+                                                <option value="MEDIUM">Medium</option>
+                                                <option value="HIGH">High</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="col-md-6">
+                                            <label className="form-label">Due Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-control"
+                                                value={dueDate}
+                                                onChange={(e) => setDueDate(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* Task List Display */}
             <div className="list-group">
                 {tasks.map(task => (
-                    <div key={task.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
-                        <div className="d-flex flex-column">
+                    <div key={task.id} className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 ${task.priority === 'HIGH' && task.status !== 'COMPLETED' ? 'border-start border-4 border-danger' : ''}`}>
+                        <div className="d-flex flex-column flex-grow-1">
                             <div className="d-flex align-items-center gap-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input mt-0"
                                     checked={task.status === 'COMPLETED'}
-                                    onChange={() => handleToggleStatus(task)}
+                                    onChange={() => handleToggleStatus(task)} // Ensure this function is defined as before
                                 />
-                                <h5 className="mb-0 text-decoration-none">
-                                    <Link to={`/tasks/${task.id}`} className="text-dark text-decoration-none">
+                                <h5 className={`mb-0 text-decoration-none ${task.status === 'COMPLETED' ? 'text-muted text-decoration-line-through' : ''}`}>
+                                    <Link to={`/tasks/${task.id}`} className="text-reset text-decoration-none">
                                         {task.title}
                                     </Link>
                                 </h5>
+
+                                {/* Status Badges */}
                                 {task.aiStatus === 'PROCESSING' && <span className="badge bg-warning text-dark">AI Analyzing...</span>}
-                                {task.aiStatus === 'COMPLETED' && <span className="badge bg-success">AI Suggestions Ready</span>}
-                                {task.aiStatus === 'ERROR' && <span className="badge bg-danger">AI Error</span>}
+                                {task.aiStatus === 'COMPLETED' && <span className="badge bg-success">AI Ready</span>}
+                                {task.priority === 'HIGH' && <span className="badge bg-danger">High</span>}
                             </div>
-                            <small className="text-muted mt-1">Priority: {task.priority} • Created: {new Date(task.createdAt).toLocaleDateString()}</small>
+
+                            <div className="d-flex gap-3 text-muted mt-1 small">
+                                {task.dueDate && (
+                                    <span>📅 {new Date(task.dueDate).toLocaleDateString()}</span>
+                                )}
+                                {task.description && (
+                                    <span className="text-truncate" style={{ maxWidth: '300px' }}>
+                                        📝 {task.description}
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        <div>
-                            <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(task.id)}>Delete</button>
+
+                        <div className="ms-2">
+                            <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(task.id)}>
+                                <i className="fas fa-trash"></i> Delete
+                            </button>
                         </div>
                     </div>
                 ))}
             </div>
-
             {tasks.length === 0 && (
                 <div className="text-center py-5 text-muted">
                     <h4>No tasks yet</h4>

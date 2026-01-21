@@ -1,11 +1,11 @@
 export interface Task {
     id: string;
     title: string;
-    description?: string;
+    description: string | null;
     status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
     priority: 'LOW' | 'MEDIUM' | 'HIGH';
     aiStatus: 'NONE' | 'PROCESSING' | 'COMPLETED' | 'ERROR';
-    dueDate?: string;
+    dueDate: string | null;
     createdAt: string;
     threads?: AiThread[];
 }
@@ -52,4 +52,5 @@ export interface UpdateTaskDto {
     description?: string;
     priority?: 'LOW' | 'MEDIUM' | 'HIGH';
     dueDate?: string;
+    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
