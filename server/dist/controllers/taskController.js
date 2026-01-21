@@ -3,12 +3,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteTask = exports.updateTask = exports.getTask = exports.createTask = exports.getTasks = void 0;
+exports.submitQuery = exports.deleteTask = exports.updateTask = exports.getTask = exports.createTask = exports.getTasks = void 0;
 const prisma_1 = __importDefault(require("../prisma"));
 const aiService_1 = require("../services/aiService");
+const taskQueue_1 = require("../queue/taskQueue");
 const getTasks = async (req, res) => {
     try {
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
         const tasks = await prisma_1.default.task.findMany({
+            where: { userId },
             orderBy: { createdAt: 'desc' },
             include: { threads: true }
         });
@@ -21,7 +26,10 @@ const getTasks = async (req, res) => {
 exports.getTasks = getTasks;
 const createTask = async (req, res) => {
     try {
-        const { title, description, priority, dueDate, userId } = req.body;
+        const { title, description, priority, dueDate } = req.body;
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
         // Create task
         const task = await prisma_1.default.task.create({
             data: {
@@ -30,15 +38,16 @@ const createTask = async (req, res) => {
                 priority,
                 dueDate: dueDate ? new Date(dueDate) : null,
                 status: 'PENDING',
-                userId: userId // TODO: Replace with actual user ID from auth middleware
+                aiStatus: 'PROCESSING',
+                userId
             }
         });
-        // Trigger AI Analysis Job (Background)
-        // In a real production app, this should be handled by a queue (Bull)
-        // For MVP, we can just call it asynchronously without awaiting
-        (0, aiService_1.analyzeTask)(task.id, task.title, task.description).catch(err => {
-            console.error('AI Analysis Trigger Failed:', err);
+        await taskQueue_1.taskQueue.add('analyse-task', {
+            taskId: task.id,
+            title: task.title,
+            description: task.description
         });
+        console.log(`Task ${task.id} queued for analysis`);
         res.status(201).json(task);
     }
     catch (error) {
@@ -50,8 +59,14 @@ exports.createTask = createTask;
 const getTask = async (req, res) => {
     try {
         const { id } = req.params;
-        const task = await prisma_1.default.task.findUnique({
-            where: { id: String(id) },
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        const task = await prisma_1.default.task.findFirst({
+            where: {
+                id: String(id),
+                userId
+            },
             include: { threads: true }
         });
         if (!task) {
@@ -67,7 +82,16 @@ exports.getTask = getTask;
 const updateTask = async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.id;
         const { title, description, status, priority, dueDate } = req.body;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        const existingTask = await prisma_1.default.task.findFirst({
+            where: { id: String(id), userId }
+        });
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
         const task = await prisma_1.default.task.update({
             where: { id: String(id) },
             data: {
@@ -88,6 +112,16 @@ exports.updateTask = updateTask;
 const deleteTask = async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        // Check ownership
+        const existingTask = await prisma_1.default.task.findFirst({
+            where: { id: String(id), userId }
+        });
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
         await prisma_1.default.task.delete({ where: { id: String(id) } });
         res.status(204).send();
     }
@@ -96,3 +130,29 @@ const deleteTask = async (req, res) => {
     }
 };
 exports.deleteTask = deleteTask;
+const submitQuery = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { question } = req.body;
+        const userId = req.user?.id;
+        if (!userId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        if (!question) {
+            return res.status(400).json({ error: 'Question is required' });
+        }
+        // Check ownership
+        const existingTask = await prisma_1.default.task.findFirst({
+            where: { id: String(id), userId }
+        });
+        if (!existingTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        const newThread = await (0, aiService_1.processUserQuery)(id, question);
+        res.status(201).json(newThread);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to process query' });
+    }
+};
+exports.submitQuery = submitQuery;
