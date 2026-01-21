@@ -1,0 +1,163 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { login, register } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface LoginScreenProps {
+    onLogin: () => void;
+}
+
+export default function LoginScreen({ onLogin }: LoginScreenProps) {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!email.trim() || !password.trim()) {
+            Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (isRegistering && !name.trim()) {
+            Alert.alert('Error', 'Please enter your name');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            let token;
+            if (isRegistering) {
+                const response = await register({ email, password, name });
+                token = response.token;
+            } else {
+                const response = await login({ email, password });
+                token = response.token;
+            }
+
+            if (token) {
+                await AsyncStorage.setItem('token', token);
+                onLogin();
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Authentication failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+        >
+            <SafeAreaView style={styles.content}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>AI Todo App</Text>
+                    <Text style={styles.subtitle}>{isRegistering ? 'Create an account' : 'Welcome back'}</Text>
+                </View>
+
+                <View style={styles.form}>
+                    {isRegistering && (
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Name"
+                            value={name}
+                            onChangeText={setName}
+                            autoCapitalize="words"
+                        />
+                    )}
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Password"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                    />
+
+                    <TouchableOpacity
+                        style={[styles.button, loading && styles.buttonDisabled]}
+                        onPress={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{isRegistering ? 'Sign Up' : 'Log In'}</Text>}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => setIsRegistering(!isRegistering)} style={styles.switchButton}>
+                        <Text style={styles.switchText}>
+                            {isRegistering ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </KeyboardAvoidingView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
+    content: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 24,
+    },
+    header: {
+        marginBottom: 48,
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        color: '#333',
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#666',
+    },
+    form: {
+        width: '100%',
+    },
+    input: {
+        backgroundColor: '#f5f5f5',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 16,
+        fontSize: 16,
+    },
+    button: {
+        backgroundColor: '#007AFF',
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    buttonDisabled: {
+        opacity: 0.7,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    switchButton: {
+        marginTop: 24,
+        alignItems: 'center',
+    },
+    switchText: {
+        color: '#007AFF',
+        fontSize: 14,
+    },
+});
