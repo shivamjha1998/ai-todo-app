@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import type {
     Task,
     CreateTaskDto,
@@ -10,8 +11,21 @@ import type {
     AuthResponse
 } from '../types';
 
-// Use localhost for iOS simulator, 10.0.2.2 for Android emulator
-const BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:3001' : 'http://localhost:3001';
+const getBaseUrl = () => {
+    if (Platform.OS === 'android' && !Constants.isDevice) {
+        return 'http://10.0.2.2:3001'; // Android Emulator
+    }
+
+    const debuggerHost = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost || Constants.manifest?.debuggerHost;
+    if (debuggerHost) {
+        const ip = debuggerHost.split(':')[0];
+        return `http://${ip}:3001`;
+    }
+
+    return 'http://localhost:3001'; // Fallback
+};
+
+const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = async () => {
     const token = await AsyncStorage.getItem('token');
