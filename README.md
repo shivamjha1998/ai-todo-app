@@ -13,7 +13,7 @@ An intelligent task management application that leverages LLMs to automatically 
 
 - **Frontend**: React, Vite, Bootstrap 5
 - **Backend**: Node.js, Express, PostgreSQL, Prisma, Redis, Bull
-- **AI**: Anthropic Claude API
+- **AI**: Hugging Face Inference API
 
 ## Getting Started
 
