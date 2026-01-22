@@ -1,11 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput, Platform, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Modal, TextInput, Platform, SafeAreaView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Checkbox from 'expo-checkbox';
 import { fetchTasks, createTask, deleteTask, updateTask } from '../services/api';
 import type { Task, CreateTaskDto } from '../types';
+
+import AddIcon from '../../assets/add.svg';
+import CalenderIcon from '../../assets/calender.svg';
 
 export default function TaskListScreen() {
     const navigation = useNavigation<any>();
@@ -100,8 +104,10 @@ export default function TaskListScreen() {
 
     const onChangeDate = (event: any, selectedDate?: Date) => {
         const currentDate = selectedDate || dueDate;
-        setShowDatePicker(Platform.OS === 'ios');
-        setDueDate(currentDate);
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setDueDate(currentDate);
+        }
     };
 
     const renderItem = ({ item }: { item: Task }) => (
@@ -110,10 +116,13 @@ export default function TaskListScreen() {
             onPress={() => navigation.navigate('TaskDetails', { taskId: item.id })}
         >
             <View style={styles.cardHeader}>
-                <TouchableOpacity onPress={() => toggleStatus(item)} style={styles.checkbox}>
-                    <Text>{item.status === 'COMPLETED' ? '☑️' : '⬜️'}</Text>
-                </TouchableOpacity>
-                <Text style={[styles.taskTitle, item.status === 'COMPLETED' && styles.completedText]} numberOfLines={1}>
+                <Checkbox
+                    style={styles.checkbox}
+                    value={item.status === 'COMPLETED'}
+                    onValueChange={() => toggleStatus(item)}
+                    color={item.status === 'COMPLETED' ? '#7fba94' : undefined}
+                />
+                <Text style={[styles.taskTitle, item.status === 'COMPLETED' && styles.completedText]}>
                     {item.title}
                 </Text>
                 <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.optionButton}>
@@ -129,7 +138,12 @@ export default function TaskListScreen() {
                 {item.priority === 'HIGH' && <Text style={styles.badgeDanger}>High Priority</Text>}
                 {item.priority === 'MEDIUM' && <Text style={styles.badgeWarning}>Medium Priority</Text>}
                 {item.priority === 'LOW' && <Text style={styles.badgeInfo}>Low Priority</Text>}
-                {item.dueDate && <Text style={styles.dateText}>📅 {new Date(item.dueDate).toLocaleDateString()}</Text>}
+                {item.dueDate && (
+                    <View style={styles.dateContainer}>
+                        <CalenderIcon width={20} height={20} />
+                        <Text style={styles.dateText}>{new Date(item.dueDate).toLocaleDateString()}</Text>
+                    </View>
+                )}
                 {item.aiStatus === 'PROCESSING' && <Text style={styles.badgeProcessing}>AI Analyzing...</Text>}
             </View>
         </TouchableOpacity>
@@ -143,23 +157,25 @@ export default function TaskListScreen() {
                     <TouchableOpacity onPress={logout} style={styles.logoutButton}>
                         <MaterialIcons name="logout" size={24} color="#666" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-                        <Text style={styles.addButtonText}>+</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
 
             {loading ? (
-                <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 50 }} />
+                <ActivityIndicator size="large" color="#5dcdf3" style={{ marginTop: 50 }} />
             ) : (
                 <FlatList
                     data={tasks}
                     renderItem={renderItem}
                     keyExtractor={item => item.id}
-                    contentContainerStyle={styles.list}
+                    contentContainerStyle={[styles.list, { paddingBottom: 100 }]}
                     ListEmptyComponent={<Text style={styles.emptyText}>No tasks yet. Create one!</Text>}
                 />
+
             )}
+
+            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
+                <AddIcon width={30} height={30} />
+            </TouchableOpacity>
 
             <Modal
                 animationType="slide"
@@ -167,71 +183,78 @@ export default function TaskListScreen() {
                 visible={modalVisible}
                 onRequestClose={() => setModalVisible(false)}
             >
-                <View style={styles.modalView}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>New Task</Text>
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={styles.modalView}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>New Task</Text>
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="What needs to be done?"
-                            value={title}
-                            onChangeText={setTitle}
-                        />
-
-                        <TextInput
-                            style={[styles.input, styles.textArea]}
-                            placeholder="Description"
-                            value={description}
-                            onChangeText={setDescription}
-                            multiline
-                        />
-
-                        <Text style={styles.label}>Priority</Text>
-                        <View style={styles.priorityContainer}>
-                            {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => (
-                                <TouchableOpacity
-                                    key={p}
-                                    style={[styles.priorityButton, priority === p && styles.priorityButtonSelected,
-                                    priority === p && p === 'HIGH' ? { backgroundColor: '#ff3b30' } :
-                                        priority === p && p === 'MEDIUM' ? { backgroundColor: '#ff9500' } :
-                                            priority === p && p === 'LOW' ? { backgroundColor: '#007AFF' } : {}
-                                    ]}
-                                    onPress={() => setPriority(p)}
-                                >
-                                    <Text style={[styles.priorityText, priority === p && { color: '#fff' }]}>{p}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={styles.label}>Due Date</Text>
-                        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-                            <Text style={styles.dateButtonText}>{dueDate ? dueDate.toLocaleDateString() : 'Set Due Date'}</Text>
-                        </TouchableOpacity>
-
-                        {showDatePicker && (
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={dueDate || new Date()}
-                                mode="date"
-                                is24Hour={true}
-                                display="default"
-                                onChange={onChangeDate}
+                            <TextInput
+                                style={styles.input}
+                                placeholder="What needs to be done?"
+                                placeholderTextColor="#666"
+                                value={title}
+                                onChangeText={setTitle}
                             />
-                        )}
 
-                        <View style={styles.modalButtons}>
-                            <Button title="Cancel" onPress={() => setModalVisible(false)} color="gray" />
-                            <Button title="Create" onPress={handleCreateTask} />
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                placeholder="Description"
+                                placeholderTextColor="#666"
+                                value={description}
+                                onChangeText={setDescription}
+                                multiline
+                            />
+
+                            <Text style={styles.label}>Priority</Text>
+                            <View style={styles.priorityContainer}>
+                                {(['LOW', 'MEDIUM', 'HIGH'] as const).map((p) => (
+                                    <TouchableOpacity
+                                        key={p}
+                                        style={[styles.priorityButton, priority === p && styles.priorityButtonSelected,
+                                        priority === p && p === 'HIGH' ? { backgroundColor: '#fa8a8b' } :
+                                            priority === p && p === 'MEDIUM' ? { backgroundColor: '#f6bb40' } :
+                                                priority === p && p === 'LOW' ? { backgroundColor: '#5dcdf3' } : {}
+                                        ]}
+                                        onPress={() => setPriority(p)}
+                                    >
+                                        <Text style={[styles.priorityText, priority === p && { color: '#fff' }]}>{p}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <Text style={styles.label}>Due Date</Text>
+                            <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+                                <Text style={styles.dateButtonText}>{dueDate ? dueDate.toLocaleDateString() : 'Set Due Date'}</Text>
+                            </TouchableOpacity>
+
+                            {showDatePicker && (
+                                <DateTimePicker
+                                    testID="dateTimePicker"
+                                    value={dueDate || new Date()}
+                                    mode="date"
+                                    is24Hour={true}
+                                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                                    onChange={onChangeDate}
+                                    textColor="#666"
+                                    themeVariant="light"
+                                    style={{ alignSelf: 'center' }}
+                                />
+                            )}
+
+                            <View style={styles.modalButtons}>
+                                <Button title="Cancel" onPress={() => setModalVisible(false)} color="#fd888b" />
+                                <Button title="Create" onPress={handleCreateTask} />
+                            </View>
                         </View>
                     </View>
-                </View>
+                </TouchableWithoutFeedback>
             </Modal>
         </SafeAreaView>
     );
 }
 
 // Helper component for simple button
-const Button = ({ title, onPress, color = '#007AFF' }: any) => (
+const Button = ({ title, onPress, color = '#60c9f7' }: any) => (
     <TouchableOpacity style={[styles.btn, { backgroundColor: color }]} onPress={onPress}>
         <Text style={styles.btnText}>{title}</Text>
     </TouchableOpacity>
@@ -247,21 +270,29 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 20,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
     },
     addButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#007AFF',
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: '#000',
+        backgroundColor: '#fa8a8b',
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 8,
+        zIndex: 10,
     },
     addButtonText: {
         color: '#fff',
@@ -274,17 +305,18 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: '#fff',
         borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#000',
         padding: 16,
         marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        borderBottomWidth: 5,
+        borderBottomColor: '#000',
+        borderRightWidth: 5,
+        borderRightColor: '#000',
     },
     highPriority: {
         borderLeftWidth: 4,
-        borderLeftColor: '#ff3b30',
+        borderLeftColor: '#fa8a8b',
     },
     cardHeader: {
         flexDirection: 'row',
@@ -293,6 +325,10 @@ const styles = StyleSheet.create({
     },
     checkbox: {
         marginRight: 12,
+        borderWidth: 1,
+        borderColor: '#000',
+        width: 25,
+        height: 25,
     },
     taskTitle: {
         fontSize: 18,
@@ -323,44 +359,57 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     badgeDanger: {
-        backgroundColor: '#ff3b30',
-        color: '#fff',
+        backgroundColor: '#fa8a8b',
+        color: '#000',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: 11,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#000',
     },
     badgeWarning: {
-        backgroundColor: '#ff9500',
-        color: '#fff',
+        backgroundColor: '#f6bb40',
+        color: '#000',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: 11,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#000',
     },
     badgeInfo: {
-        backgroundColor: '#007AFF',
-        color: '#fff',
+        backgroundColor: '#5dcdf3',
+        color: '#000',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: 11,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#000',
     },
     badgeProcessing: {
-        backgroundColor: '#E5E5EA',
+        backgroundColor: '#f6bb40',
         color: '#333',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: 11,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#000',
     },
     dateText: {
         color: '#666',
         fontSize: 12,
+        marginLeft: 4,
+    },
+    dateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingVertical: 4,
     },
     emptyText: {
@@ -376,14 +425,11 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '90%',
-        backgroundColor: 'white',
+        backgroundColor: '#eee8e6',
         borderRadius: 20,
         padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
+        borderWidth: 2,
+        borderColor: '#000',
     },
     modalTitle: {
         fontSize: 24,
@@ -398,7 +444,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         fontSize: 16,
         borderWidth: 1,
-        borderColor: '#eee',
+        borderColor: '#000',
     },
     textArea: {
         height: 100,
@@ -422,7 +468,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: '#000',
         alignItems: 'center',
     },
     priorityButtonSelected: {
@@ -437,7 +483,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         backgroundColor: '#f9f9f9',
         borderWidth: 1,
-        borderColor: '#eee',
+        borderColor: '#000',
         marginBottom: 24,
         alignItems: 'center',
     },
@@ -456,9 +502,15 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#000',
+        borderBottomWidth: 5,
+        borderBottomColor: '#000',
+        borderRightWidth: 5,
+        borderRightColor: '#000',
     },
     btnText: {
-        color: '#fff',
+        color: '#000',
         fontWeight: '600',
         fontSize: 16,
     },

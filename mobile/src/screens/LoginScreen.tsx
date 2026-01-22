@@ -120,13 +120,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 32,
+        fontSize: 40,
         fontWeight: 'bold',
         marginBottom: 8,
         color: '#333',
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 20,
         color: '#666',
     },
     form: {
