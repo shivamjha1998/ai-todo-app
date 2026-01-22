@@ -1,6 +1,6 @@
 # AI-Powered Todo App
 
-An intelligent task management application that leverages Claude API to automatically analyze tasks, suggest execution steps, and manage context.
+An intelligent task management application that leverages LLMs to automatically analyze tasks, suggest execution steps, and manage context.
 
 ## Features
 
@@ -32,7 +32,15 @@ npx prisma generate
 npm run dev
 ```
 
-### 3. Frontend
+### 3. Mobile (Frontend)
+Navigate to the server directory, install dependencies, and start the server:
+```bash
+cd mobile
+npm install
+npx expo run
+```
+
+### 4. Web (Frontend)
 Navigate to the web directory, install dependencies, and start the application:
 ```bash
 cd web
