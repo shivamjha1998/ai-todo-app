@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import prisma from '../prisma';
 import { processUserQuery } from '../services/aiService';
 import { taskQueue } from '../queue/taskQueue';

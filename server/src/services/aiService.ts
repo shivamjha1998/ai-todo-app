@@ -1,6 +1,5 @@
 import { InferenceClient } from '@huggingface/inference';
 import prisma from '../prisma';
-import { ThreadType, Role } from '@prisma/client';
 
 const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
@@ -56,7 +55,6 @@ export const analyzeTask = async (taskId: string, taskTitle: string, taskDescrip
             where: { id: taskId },
             data: { aiStatus: 'ERROR' }
         });
-        // We don't throw here to ensure the task creation doesn't fail just because AI failed
     }
 };
 
@@ -65,7 +63,7 @@ export const processUserQuery = async (taskId: string, question: string) => {
         // 1. Fetch task details for context
         const task = await prisma.task.findUnique({
             where: { id: taskId },
-            include: { threads: true } // Optional: Include past history for better context
+            include: { threads: true }
         });
 
         if (!task) throw new Error('Task not found');
@@ -74,7 +72,7 @@ export const processUserQuery = async (taskId: string, question: string) => {
         await prisma.aiThread.create({
             data: {
                 taskId,
-                type: 'USER_QUESTION', // Matches enum in schema
+                type: 'USER_QUESTION',
                 role: 'USER',
                 content: question
             }
@@ -106,7 +104,7 @@ export const processUserQuery = async (taskId: string, question: string) => {
         const savedThread = await prisma.aiThread.create({
             data: {
                 taskId,
-                type: 'AI_ANSWER', // Matches enum in schema
+                type: 'AI_ANSWER',
                 role: 'ASSISTANT',
                 content: aiResponse
             }

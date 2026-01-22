@@ -3,14 +3,10 @@ import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Activi
 import { useRoute, useNavigation } from '@react-navigation/native';
 import LottieView from 'lottie-react-native';
 import { getTask, postQuery } from '../services/api';
-import type { Task, AiThread } from '../types';
+import type { Task } from '../types';
 import Markdown from 'react-native-markdown-display';
 
 import BackIcon from '../../assets/back.svg';
-
-// Simple Markdown-like renderer (React Native doesn't support HTML/Markdown natively without heavy libs)
-// For this MVP, we will just render text. 
-// A production app would use `react-native-markdown-display`.
 
 export default function TaskDetailsScreen() {
     const route = useRoute<any>();
@@ -55,7 +51,6 @@ export default function TaskDetailsScreen() {
             await postQuery(taskId, question);
             setQuestion('');
             await loadTask();
-            // Scroll to bottom
             setTimeout(() => {
                 scrollViewRef.current?.scrollToEnd({ animated: true });
             }, 500);
@@ -69,7 +64,6 @@ export default function TaskDetailsScreen() {
     if (loading) return <ActivityIndicator style={styles.center} />;
     if (!task) return <View style={styles.center}><Text>Task not found</Text></View>;
 
-    // Sort threads like web: createdAt ascending
     const threads = task.threads ? [...task.threads].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) : [];
 
     return (
@@ -164,10 +158,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fbb640',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    backButtonText: {
-        fontSize: 16,
-        color: '#007AFF',
     },
     headerTitle: {
         flex: 1,

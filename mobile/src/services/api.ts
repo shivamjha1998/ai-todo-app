@@ -13,7 +13,7 @@ import type {
 
 const getBaseUrl = () => {
     if (Platform.OS === 'android' && !Constants.isDevice) {
-        return 'http://10.0.2.2:3001'; // Android Emulator
+        return 'http://10.0.2.2:3001';
     }
 
     const debuggerHost = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost || Constants.manifest?.debuggerHost;
@@ -22,7 +22,7 @@ const getBaseUrl = () => {
         return `http://${ip}:3001`;
     }
 
-    return 'http://localhost:3001'; // Fallback
+    return 'http://localhost:3001';
 };
 
 const BASE_URL = getBaseUrl();
@@ -65,7 +65,6 @@ export const fetchTasks = async (): Promise<Task[]> => {
     } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
             await AsyncStorage.removeItem('token');
-            // Logic to redirect to login handled in UI
             throw new Error('Unauthorized');
         }
         throw new Error('Failed to fetch tasks');

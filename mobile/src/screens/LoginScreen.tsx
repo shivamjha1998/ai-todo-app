@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ActivityIndicator, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { login as loginApi, register } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
-
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
-    const navigation = useNavigation<any>();
     const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

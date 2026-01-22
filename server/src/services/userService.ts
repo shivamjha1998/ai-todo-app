@@ -2,7 +2,7 @@ import prisma from '../prisma';
 
 export const getOrCreateDefaultUser = async () => {
     const defaultEmail = 'demo@example.com';
-    
+
     let user = await prisma.user.findUnique({
         where: { email: defaultEmail }
     });
@@ -13,7 +13,7 @@ export const getOrCreateDefaultUser = async () => {
             data: {
                 email: defaultEmail,
                 name: 'Demo User',
-                password: 'hashed_password_placeholder', // In a real app, hash this!
+                password: 'hashed_password_placeholder',
             }
         });
     }

@@ -169,7 +169,7 @@ export default function TaskList() {
                                     type="checkbox"
                                     className="form-check-input mt-0"
                                     checked={task.status === 'COMPLETED'}
-                                    onChange={() => handleToggleStatus(task)} // Ensure this function is defined as before
+                                    onChange={() => handleToggleStatus(task)}
                                 />
                                 <h5 className={`mb-0 text-decoration-none ${task.status === 'COMPLETED' ? 'text-muted text-decoration-line-through' : ''}`}>
                                     <Link to={`/tasks/${task.id}`} className="text-reset text-decoration-none">

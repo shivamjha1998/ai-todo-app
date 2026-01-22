@@ -17,7 +17,7 @@ export const taskWorker = new Worker('ai-analysis-queue', async (job) => {
     try {
         const { taskId, title, description } = job.data;
 
-        // Call your existing AI service logic here
+        // Call existing AI service logic here
         const result = await analyzeTask(taskId, title, description);
 
         console.log(`[Job ${job.id}] Completed`);
