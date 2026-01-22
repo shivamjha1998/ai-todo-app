@@ -3,7 +3,8 @@ import prisma from '../prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_awsome_secret_key';
+if (!process.env.JWT_SECRET) throw new Error("FATAL: JWT_SECRET is not defined.");
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const register = async (req: Request, res: Response) => {
     try {
