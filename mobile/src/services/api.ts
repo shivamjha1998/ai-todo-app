@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import type {
@@ -28,7 +29,7 @@ const getBaseUrl = () => {
 const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = async () => {
-    const token = await AsyncStorage.getItem('token');
+    const token = await SecureStore.getItemAsync('token');
     return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
@@ -40,6 +41,9 @@ const getAuthHeaders = async () => {
 export const login = async (data: LoginDto): Promise<AuthResponse> => {
     try {
         const response = await axios.post(`${BASE_URL}/auth/login`, data);
+        if (response.data.token) {
+            await SecureStore.setItemAsync('token', response.data.token);
+        }
         return response.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.error || 'Login failed');
@@ -64,7 +68,7 @@ export const fetchTasks = async (): Promise<Task[]> => {
         return response.data;
     } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
-            await AsyncStorage.removeItem('token');
+            await SecureStore.deleteItemAsync('token');
             throw new Error('Unauthorized');
         }
         throw new Error('Failed to fetch tasks');

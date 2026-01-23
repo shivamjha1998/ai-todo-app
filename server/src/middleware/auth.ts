@@ -4,16 +4,17 @@ import jwt from 'jsonwebtoken';
 if (!process.env.JWT_SECRET) throw new Error("FATAL: JWT_SECRET is not defined.");
 const JWT_SECRET = process.env.JWT_SECRET;
 
+interface JwtPayload {
+    id: string;
+    email: string;
+}
+
 export interface AuthRequest extends Request {
-    user?: {
-        id: string;
-        email: string;
-    };
+    user?: JwtPayload;
 }
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
-
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
@@ -21,7 +22,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     }
 
     try {
-        const verified = jwt.verify(token, JWT_SECRET) as any;
+        const verified = jwt.verify(token, JWT_SECRET) as JwtPayload;
         (req as AuthRequest).user = verified;
         next();
     } catch (error) {

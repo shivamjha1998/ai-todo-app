@@ -1,8 +1,16 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { processUserQuery } from '../services/aiService';
 import { taskQueue } from '../queue/taskQueue';
 import { AuthRequest } from '../middleware/auth';
+import { z } from 'zod';
+
+const createTaskSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+    dueDate: z.iso.datetime().optional()
+})
 
 export const getTasks = async (req: AuthRequest, res: Response) => {
     try {
@@ -23,10 +31,16 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
 
 export const createTask = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, description, priority, dueDate } = req.body;
         const userId = req.user?.id;
-
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const validation = createTaskSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.issues });
+        }
+
+        const { title, description, priority, dueDate } = validation.data;
 
         // Create task
         const task = await prisma.task.create({
@@ -46,11 +60,10 @@ export const createTask = async (req: AuthRequest, res: Response) => {
             title: task.title,
             description: task.description
         });
-        console.log(`Task ${task.id} queued for analysis`);
 
         res.status(201).json(task);
     } catch (error) {
-        console.error(error);
+        console.error("Create Task Error: ", error);
         res.status(500).json({ error: 'Failed to create task' });
     }
 };
