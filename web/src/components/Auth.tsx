@@ -35,8 +35,8 @@ export default function Auth({ onLoginSuccess }: AuthProps) {
     };
 
     return (
-        <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-            <div className="card shadow-sm p-4" style={{ maxWidth: '400px', width: '100%' }}>
+        <div className="d-flex justify-content-center align-items-center vh-100">
+            <div className="card p-4" style={{ maxWidth: '400px', width: '100%', backgroundColor: '#fff' }}>
                 <h2 className="text-center mb-4">{isLogin ? 'Login' : 'Create Account'}</h2>
 
                 {error && <div className="alert alert-danger">{error}</div>}

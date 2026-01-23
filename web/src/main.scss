@@ -1,10 +1,166 @@
 // Custom SCSS
-$primary: #0d6efd;
+$body-bg: #eee8e6;
+$body-color: #333;
+$primary: #60c9f7;
+$secondary: #fae29d;
+$success: #7fba94;
+$info: #5dcdf3;
+$warning: #f6bb40;
+$danger: #fa8a8b;
+$light: #ffffff;
+$dark: #000000;
+
+$border-width: 2px;
+$border-color: #000;
+$border-radius: 12px;
+$box-shadow: 4px 4px 0px 0px #000;
+
+$enable-rounded: true;
+$enable-shadows: false;
+$enable-gradients: false;
+
 $font-family-base: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
 @import "bootstrap/scss/bootstrap";
 
+// --- Global Overrides & Utilities ---
+
 body {
-  background-color: #f8f9fa;
-  -webkit-font-smoothing: antialiased;
+  border-top: 10px solid $primary;
+}
+
+// Cards
+.card {
+  border: $border-width solid $border-color;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+
+  .card-header {
+    background-color: transparent;
+    border-bottom: $border-width solid $border-color;
+    font-weight: bold;
+  }
+
+  .card-footer {
+    background-color: transparent;
+    border-top: $border-width solid $border-color;
+  }
+}
+
+// Buttons
+.btn {
+  border: $border-width solid $border-color;
+  border-radius: $border-radius;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 2px 2px 0px 0px #000;
+  transition: all 0.1s;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0px 0px #000;
+  }
+
+  &:active {
+    transform: translate(0px, 0px);
+    box-shadow: 0px 0px 0px 0px #000;
+  }
+}
+
+.btn-primary {
+  background-color: $primary;
+  color: #000;
+
+  &:hover {
+    background-color: lighten($primary, 5%);
+    color: #000;
+    border-color: #000;
+  }
+}
+
+.btn-secondary {
+  background-color: $secondary;
+  color: #000;
+
+  &:hover {
+    background-color: lighten($secondary, 5%);
+    color: #000;
+    border-color: #000;
+  }
+}
+
+.btn-danger {
+  background-color: $danger;
+  color: #000;
+
+  &:hover {
+    background-color: lighten($danger, 5%);
+    color: #000;
+    border-color: #000;
+  }
+}
+
+.btn-outline-secondary {
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+
+  &:hover {
+    background-color: #f0f0f0;
+    color: #000;
+    border-color: #000;
+  }
+}
+
+// Inputs
+.form-control,
+.form-select {
+  border: $border-width solid $border-color;
+  border-radius: $border-radius;
+  background-color: #f9f9f9;
+  box-shadow: inset 2px 2px 0px 0px rgba(0, 0, 0, 0.05);
+
+  &:focus {
+    box-shadow: inset 2px 2px 0px 0px rgba(0, 0, 0, 0.05), 0 0 0 0.25rem rgba(0, 0, 0, 0.1);
+    border-color: #000;
+    background-color: #fff;
+  }
+}
+
+// Badges
+.badge {
+  border: 1px solid #000;
+  color: #000 !important;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+// List Groups (Task List items)
+.list-group-item {
+  border: $border-width solid $border-color;
+  margin-bottom: 0.75rem;
+  border-radius: $border-radius !important;
+  box-shadow: $box-shadow;
+
+  &:hover {
+    background-color: #fcfcfc;
+  }
+}
+
+// Navbar/Header
+header {
+  border-bottom: $border-width solid $border-color !important;
+}
+
+// Links
+a {
+  color: #000;
+  text-decoration-thickness: 2px;
+
+  &:hover {
+    color: $primary;
+  }
 }

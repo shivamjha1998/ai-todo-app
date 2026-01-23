@@ -71,10 +71,14 @@ export default function TaskDetails() {
                 <div className="card-header bg-white">
                     <h4 className="mb-0">AI Assistant & Threads</h4>
                 </div>
-                <div className="card-body bg-light">
+                <div className="card-body">
                     <div className="d-flex flex-column gap-3 mb-4">
                         {task.threads?.slice().sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map(thread => (
-                            <div key={thread.id} className={`card ${thread.role === 'ASSISTANT' ? 'border-primary' : ''}`}>
+                            <div key={thread.id} className="card mb-3" style={
+                                thread.role === 'ASSISTANT'
+                                    ? { borderLeft: '5px solid #5dcdf3', backgroundColor: '#fff' }
+                                    : { borderRight: '5px solid #fa8a8b', backgroundColor: '#fff' }
+                            }>
                                 <div className="card-body">
                                     <h6 className="card-subtitle mb-2 text-muted text-uppercase small">
                                         {thread.role === 'ASSISTANT' ? '🤖 AI Assistant' : '👤 You'}

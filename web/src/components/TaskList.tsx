@@ -89,7 +89,7 @@ export default function TaskList() {
         <div className="container">
             <div className="row mb-4">
                 <div className="col">
-                    <div className="card shadow-sm">
+                    <div className="card">
                         <div className="card-body">
                             <form onSubmit={handleCreateTask}>
                                 {/* Main Input */}
@@ -105,7 +105,7 @@ export default function TaskList() {
                                     />
                                     <button
                                         type="button"
-                                        className={`btn ${showDetails ? 'btn-secondary' : 'btn-outline-secondary'}`}
+                                        className="btn btn-secondary"
                                         onClick={() => setShowDetails(!showDetails)}
                                     >
                                         {showDetails ? 'Hide Details' : 'Add Details'}
@@ -181,6 +181,8 @@ export default function TaskList() {
                                 {task.aiStatus === 'PROCESSING' && <span className="badge bg-warning text-dark">AI Analyzing...</span>}
                                 {task.aiStatus === 'COMPLETED' && <span className="badge bg-success">AI Ready</span>}
                                 {task.priority === 'HIGH' && <span className="badge bg-danger">High</span>}
+                                {task.priority === 'MEDIUM' && <span className="badge bg-warning text-dark">Medium</span>}
+                                {task.priority === 'LOW' && <span className="badge bg-info text-dark">Low</span>}
                             </div>
 
                             <div className="d-flex gap-3 text-muted mt-1 small">

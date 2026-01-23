@@ -38,8 +38,8 @@ function App() {
     <BrowserRouter>
       <div className="container py-4">
         <header className="pb-3 mb-4 border-bottom d-flex justify-content-between align-items-center">
-          <Link to="/" className="d-flex align-items-center text-dark text-decoration-none">
-            <span className="fs-4">AI Todo App</span>
+          <Link to="/" className="d-flex align-items-center text-decoration-none">
+            <span className="fs-4 fw-bold">AI Todo App</span>
           </Link>
           <button onClick={handleLogout} className="btn btn-outline-secondary btn-sm">Logout</button>
         </header>
@@ -47,10 +47,10 @@ function App() {
         <Routes>
           <Route path="/" element={
             <>
-              <div className="p-5 mb-4 bg-light rounded-3 shadow-sm border">
+              <div className="p-5 mb-4 bg-white rounded-3 border">
                 <div className="container-fluid py-3">
                   <h1 className="display-6 fw-bold">Intelligent Task Management</h1>
-                  <p className="col-md-8 fs-5 text-muted">Analyze tasks, get suggestions, and stay organized with the power of Claude AI.</p>
+                  <p className="col-md-8 fs-5 text-muted">Analyze tasks, get suggestions, and stay organized with the power of AI.</p>
                 </div>
               </div>
               <TaskList />
