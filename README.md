@@ -11,9 +11,25 @@ An intelligent task management application that leverages LLMs to automatically 
 
 ## Tech Stack
 
-- **Frontend**: React, Vite, Bootstrap 5
+- **Frontend (Web)**: React, Vite, Bootstrap 5 (Neo-Brutalist Design)
+- **Frontend (Mobile)**: React Native, Expo
 - **Backend**: Node.js, Express, PostgreSQL, Prisma, Redis, Bull
-- **AI**: Hugging Face Inference API
+- **AI**: Hugging Face Inference API (Llama-3.2-3B-Instruct)
+
+## Prerequisites
+
+- Node.js
+- Docker (for database)
+- Expo Go (for mobile testing)
+
+## Environment Setup
+
+Create a `.env` file in the `server` directory with the following variables:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/todo_db"
+JWT_SECRET="your-secret-key"
+HF_API_KEY="your-hugging-face-api-key"
+```
 
 ## Getting Started
 
@@ -32,12 +48,12 @@ npx prisma generate
 npm run dev
 ```
 
-### 3. Mobile (Frontend)
-Navigate to the server directory, install dependencies, and start the server:
+### 3. Mobile App
+Navigate to the mobile directory, install dependencies, and start the Expo server:
 ```bash
 cd mobile
 npm install
-npx expo run
+npx expo start
 ```
 
 ### 4. Web (Frontend)
