@@ -11,10 +11,9 @@ import authRoutes from './routes/authRoutes';
 const app = express();
 const port = process.env.PORT || 3001;
 
-const allowedOrigins = [
-    'http://localhost:5173',
-    'exp://localhost:19000'
-]
+const envOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+const defaultOrigins = ['http://localhost:5173', 'exp://localhost:19000'];
+const allowedOrigins = [...envOrigins, ...defaultOrigins];
 
 app.use(cors({
     origin: function (origin, callback) {

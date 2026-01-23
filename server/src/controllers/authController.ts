@@ -2,13 +2,30 @@ import { Request, Response } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 
 if (!process.env.JWT_SECRET) throw new Error("FATAL: JWT_SECRET is not defined.");
 const JWT_SECRET = process.env.JWT_SECRET;
 
+const registerSchema = z.object({
+    email: z.email("Invalid email format"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    name: z.string().min(2, "Name is too short").optional()
+});
+
+const loginSchema = z.object({
+    email: z.email(),
+    password: z.string()
+});
+
 export const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, name } = req.body;
+        const validation = registerSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.issues[0].message });
+        }
+
+        const { email, password, name } = validation.data;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -19,12 +36,7 @@ export const register = async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name,
-                settings: {}
-            }
+            data: { email, password: hashedPassword, name, settings: {} }
         });
 
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '2d' });
@@ -41,7 +53,12 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const validation = loginSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: "Invalid email or password format" });
+        }
+
+        const { email, password } = validation.data;
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
@@ -54,7 +71,6 @@ export const login = async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '2d' });
-
         res.json({
             token,
             user: { id: user.id, email: user.email, name: user.name }
